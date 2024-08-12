@@ -36,4 +36,4 @@ This toolset helps manage X (formerly Twitter) sweepstakes by collecting user in
 ## Notes
 
 - Ensure you comply with X's terms of service and relevant sweepstakes regulations
-- The toolset is for educational purposes and should be used responsibly
+- The toolset should be used responsibly
