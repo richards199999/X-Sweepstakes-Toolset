@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X Sweepstakes Picker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            color: #1da1f2;
+            text-align: center;
+            margin-bottom: 40px;
+            font-weight: 600;
+        }
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: box-shadow 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        h2 {
+            color: #1da1f2;
+            margin-top: 0;
+            font-weight: 600;
+        }
+        .input-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        input[type="number"]:focus, input[type="file"]:focus {
+            outline: none;
+            border-color: #1da1f2;
+        }
+        button {
+            background-color: #1da1f2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 6px;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            display: block;
+            width: 100%;
+            margin-top: 24px;
+        }
+        button:hover {
+            background-color: #0c85d0;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #preview, #result {
+            margin-top: 32px;
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #e1e8ed;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f8fa;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .slide-down {
+            animation: slideDown 0.5s ease-out;
+            transform-origin: top;
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: scaleY(0);
+            }
+            to {
+                opacity: 1;
+                transform: scaleY(1);
+            }
+        }
+        .separator {
+            border-top: 1px solid #e1e8ed;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="fade-in">X Sweepstakes Picker</h1>
+    
+    <div class="card fade-in">
+        <h2>Data Upload and Preview</h2>
+        <div class="input-group">
+            <label for="csvFile">Upload CSV File:</label>
+            <input type="file" id="csvFile" accept=".csv">
+        </div>        
+        <div id="preview"></div>
+    </div>
+
+    <div class="card fade-in">
+        <h2>Selection Settings</h2>
+        <div class="input-group">
+            <label for="winnerCount">Number of winners to select:</label>
+            <input type="number" id="winnerCount" min="1" value="1">
+        </div>
+        <div class="input-group">
+            <label for="followWeight">Weight factor for followers (1-10):</label>
+            <input type="number" id="followWeight" min="1" max="10" value="5">
+        </div>
+        <button onclick="selectWinners()">Select Winners</button>
+    </div>
+
+    <div id="result" class="card fade-in"></div>
+
+    <script>
+        let usernames = [];
+        let followsYou = [];
+
+        document.getElementById('csvFile').addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n');
+                    usernames = [];
+                    followsYou = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        const [username, follows] = lines[i].split(',');
+                        if (username) {
+                            usernames.push(username.trim());
+                            followsYou.push(follows.trim() === '1' ? 1 : 0);
+                        }
+                    }
+                    console.log(`Loaded ${usernames.length} usernames`);
+                    previewData();
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function previewData() {
+            const previewDiv = document.getElementById('preview');
+            let previewHTML = '<h3>Data Preview (First 5 Rows)</h3>';
+            previewHTML += '<table><tr><th>Username</th><th>Follows You</th></tr>';
+            
+            for (let i = 0; i < Math.min(5, usernames.length); i++) {
+                previewHTML += `<tr><td>${usernames[i]}</td><td>${followsYou[i] ? 'Yes' : 'No'}</td></tr>`;
+            }
+            
+            previewHTML += '</table>';
+            previewDiv.innerHTML = previewHTML;
+            previewDiv.style.display = 'block';
+            previewDiv.classList.remove('slide-down');
+            void previewDiv.offsetWidth; // Trigger reflow
+            previewDiv.classList.add('slide-down');
+        }
+
+        class SeededRandom {
+            constructor(seed = Date.now()) {
+                this.seed = seed;
+            }
+
+            random() {
+                const x = Math.sin(this.seed++) * 10000;
+                return x - Math.floor(x);
+            }
+        }
+
+        function calculateWeight(followsYou, weightFactor) {
+            const baseWeight = 1;
+            const followBonus = followsYou ? (weightFactor - 1) / 9 : 0;
+            return baseWeight + followBonus;
+        }
+
+        const selectionMethods = {
+            weightedRandom: (weights, count, rng) => {
+                const winners = [];
+                const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+
+                while (winners.length < count && winners.length < weights.length) {
+                    let randomWeight = rng.random() * totalWeight;
+                    for (let i = 0; i < weights.length; i++) {
+                        if (!winners.includes(i)) {
+                            randomWeight -= weights[i];
+                            if (randomWeight <= 0) {
+                                winners.push(i);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                return winners;
+            }
+        };
+
+        function selectWinners() {
+            const winnerCount = parseInt(document.getElementById('winnerCount').value);
+            const weightFactor = parseInt(document.getElementById('followWeight').value);
+            const resultDiv = document.getElementById('result');
+
+            if (usernames.length === 0) {
+                resultDiv.innerHTML = '<p>Please upload a CSV file with usernames and follow status.</p>';
+                return;
+            }
+
+            if (winnerCount <= 0 || winnerCount > usernames.length) {
+                resultDiv.innerHTML = '<p>Please enter a valid number of winners.</p>';
+                return;
+            }
+
+            const weights = followsYou.map(follows => calculateWeight(follows, weightFactor));
+            
+            const rng = new SeededRandom();
+
+            const winnerIndices = selectionMethods.weightedRandom(weights, winnerCount, rng);
+
+            const winners = winnerIndices.map(index => ({
+                username: usernames[index],
+                follows: followsYou[index],
+                weight: weights[index]
+            }));
+
+            // Display results
+            let resultHTML = `<h2>Winners (${winners.length}):</h2>`;
+            resultHTML += '<table><tr><th>Username</th><th>Follows You</th><th>Weight</th></tr>';
+            winners.forEach(winner => {
+                resultHTML += `<tr><td>${winner.username}</td><td>${winner.follows ? 'Yes' : 'No'}</td><td>${winner.weight.toFixed(2)}</td></tr>`;
+            });
+            resultHTML += '</table>';
+
+            if (winners.length < winnerCount) {
+                resultHTML += `<p>Note: Only ${winners.length} unique usernames were available.</p>`;
+            }
+
+            resultDiv.innerHTML = resultHTML;
+            resultDiv.style.display = 'block';
+            resultDiv.classList.remove('slide-down');
+            void resultDiv.offsetWidth; // Trigger reflow
+            resultDiv.classList.add('slide-down');
+        }
+    </script>
+</body>
+</html>
