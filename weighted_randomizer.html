@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X Username Picker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #1da1f2;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 10px;
+        }
+        input[type="number"] {
+            width: 60px;
+        }
+        button, .file-upload {
+            background-color: #1da1f2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover, .file-upload:hover {
+            background-color: #0c85d0;
+        }
+        #result, #preview {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .input-section {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>X Username Picker</h1>
+    
+    <div class="input-section">
+        <h2>Upload CSV File</h2>
+        <input type="file" id="csvFile" accept=".csv" style="display: none;">
+        <button class="file-upload" onclick="document.getElementById('csvFile').click()">Choose CSV File</button>
+        <span id="fileName"></span>
+    </div>
+
+    <div id="preview"></div>
+
+    <div class="input-section">
+        <label for="winnerCount">Number of winners to select:</label>
+        <input type="number" id="winnerCount" min="1" value="1">
+    </div>
+
+    <div class="input-section">
+        <label for="followWeight">Weight for followers (1-10):</label>
+        <input type="number" id="followWeight" min="1" max="10" value="5">
+    </div>
+
+    <button onclick="selectWinners()">Select Winners</button>
+    <div id="result"></div>
+
+    <script>
+        let usernames = [];
+        let followsYou = [];
+
+        document.getElementById('csvFile').addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n');
+                    usernames = [];
+                    followsYou = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        const [username, follows] = lines[i].split(',');
+                        if (username) {
+                            usernames.push(username.trim());
+                            followsYou.push(follows.trim() === '1' ? 1 : 0);
+                        }
+                    }
+                    console.log(`Loaded ${usernames.length} usernames`);
+                    previewData();
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function previewData() {
+            const previewDiv = document.getElementById('preview');
+            let previewHTML = '<h2>Data Preview (First 5 Rows)</h2>';
+            previewHTML += '<table><tr><th>Username</th><th>Follows You</th></tr>';
+            
+            for (let i = 0; i < Math.min(5, usernames.length); i++) {
+                previewHTML += `<tr><td>${usernames[i]}</td><td>${followsYou[i]}</td></tr>`;
+            }
+            
+            previewHTML += '</table>';
+            previewDiv.innerHTML = previewHTML;
+        }
+
+        function selectWinners() {
+            const winnerCount = parseInt(document.getElementById('winnerCount').value);
+            const followWeight = parseInt(document.getElementById('followWeight').value);
+            const resultDiv = document.getElementById('result');
+
+            if (usernames.length === 0) {
+                resultDiv.innerHTML = '<p>Please upload a CSV file with usernames and follow status.</p>';
+                return;
+            }
+
+            if (winnerCount <= 0 || winnerCount > usernames.length) {
+                resultDiv.innerHTML = '<p>Please enter a valid number of winners.</p>';
+                return;
+            }
+
+            // Calculate weights for each user
+            const weights = followsYou.map(follows => follows ? followWeight : 1);
+            const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+
+            // Select winners
+            const winners = [];
+            const usedIndices = new Set();
+
+            while (winners.length < winnerCount && usedIndices.size < usernames.length) {
+                let randomWeight = Math.random() * totalWeight;
+                let selectedIndex = -1;
+
+                for (let i = 0; i < weights.length; i++) {
+                    if (!usedIndices.has(i)) {
+                        randomWeight -= weights[i];
+                        if (randomWeight <= 0) {
+                            selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (selectedIndex !== -1) {
+                    winners.push({
+                        username: usernames[selectedIndex],
+                        follows: followsYou[selectedIndex]
+                    });
+                    usedIndices.add(selectedIndex);
+                }
+            }
+
+            // Display results
+            let resultHTML = `<h2>Winners (${winners.length}):</h2>`;
+            resultHTML += '<table><tr><th>Username</th><th>Follows You</th></tr>';
+            winners.forEach(winner => {
+                resultHTML += `<tr><td>${winner.username}</td><td>${winner.follows}</td></tr>`;
+            });
+            resultHTML += '</table>';
+
+            if (winners.length < winnerCount) {
+                resultHTML += `<p>Note: Only ${winners.length} unique usernames were available.</p>`;
+            }
+
+            resultDiv.innerHTML = resultHTML;
+        }
+    </script>
+</body>
+</html>
