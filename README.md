@@ -9,7 +9,7 @@ This toolset helps manage X (formerly Twitter) sweepstakes by collecting user in
    - Tracks if users follow the account
    - Exports data to CSV
 
-2. **Weighted Randomizer** (`weighted_randomizer.html`)
+2. **Weighted Randomizer** (`randomizer.html`)
    - Web-based tool for selecting winners from collected data
    - Allows weighting based on follow status
    - Provides a user-friendly interface for running the sweepstakes
@@ -28,7 +28,7 @@ This toolset helps manage X (formerly Twitter) sweepstakes by collecting user in
 
 ### Weighted Randomizer
 
-1. Open `weighted_randomizer.html` in a web browser
+1. Open `randomizer.html` in a web browser
 2. Upload the CSV file exported from the Interaction Collector
 3. Set the number of winners and follow weight
 4. Click "Select Winners" to choose and display results
